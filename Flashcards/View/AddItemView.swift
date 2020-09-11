@@ -14,17 +14,17 @@ struct ImagePortion: View {
 
     var body: some View {
         VStack {
-            if image == nil {
-                Button("Add Photo") {
-                    showingImagePicker = true
-                }
-            } else {
-                Image(uiImage: image!)
+            if let image = image {
+                Image(uiImage: image)
                     .resizable()
                     .scaledToFit()
                     .padding([.leading, .trailing])
                 
                 Button("Change Photo") {
+                    showingImagePicker = true
+                }
+            } else {
+                Button("Add Photo") {
                     showingImagePicker = true
                 }
             }
@@ -40,15 +40,15 @@ struct LocationPortion: View {
     
     var body: some View {
         VStack {
-            if location == nil {
-                Button("Add Current Location") {
-                    location = LocationFetcher.shared.lastKnownLocation
-                }
-            } else {
-                MapView(centerCoordinate: location!)
+            if let location = location {
+                MapView(centerCoordinate: location)
                     .padding([.leading, .trailing])
                 Button("Remove Location") {
-                    location = nil
+                    self.location = nil
+                }
+            } else {
+                Button("Add Current Location") {
+                    location = LocationFetcher.shared.lastKnownLocation
                 }
             }
         }
@@ -101,7 +101,9 @@ struct AddItemView: View {
     }
     
     func donePressed() {
-        try? Store.shared.addItem(name: title, details: details, image: image, location: location)
+        if canSave {
+            try? Store.shared.addItem(name: title, details: details, image: image, location: location)
+        }
         presentationMode.wrappedValue.dismiss()
     }
 }

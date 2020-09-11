@@ -61,4 +61,11 @@ class FlashcardsTests: XCTestCase {
         persistence.invokedLoadItemsParameters?.completion([])
         XCTAssertTrue(responded)
     }
+    
+    func testDelete() throws {
+        store.deleteItems(offsets: IndexSet()) {
+            
+        }
+        XCTAssertTrue(persistence.invokedDeleteItems)
+    }
 }

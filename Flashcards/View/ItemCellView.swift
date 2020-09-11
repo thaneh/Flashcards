@@ -19,8 +19,8 @@ struct ItemCellView: View {
     
     var body: some View {
         ZStack(alignment: .leading) {
-            if image != nil {
-                Image(uiImage: image!)
+            if let image = image {
+                Image(uiImage: image)
                     .resizable()
                     .scaledToFit()
                     .frame(maxWidth: 50, maxHeight: 50)
