@@ -9,7 +9,7 @@ import Foundation
 import UIKit
 
 protocol PhotosFileServiceProtocol {
-    func save(data: Data, for id: UUID, completion: @escaping ()->Void)
+    func save(image: UIImage, for id: UUID, completion: @escaping ()->Void)
     func load(photoID id: UUID, completion: @escaping (UIImage?)->Void)
 }
 
@@ -35,16 +35,21 @@ class PhotosFileService {
 }
 
 extension PhotosFileService: PhotosFileServiceProtocol {
-    func save(data: Data, for id: UUID, completion: @escaping ()->Void) {
+    func save(image: UIImage, for id: UUID, completion: @escaping ()->Void) {
         DispatchQueue.global().async {
             do {
                 Self.createPhotosDirectory()
                 
                 let fileURL = Self.fileURL(id: id)
-                try data.write(to: fileURL)
+                if let data = image.pngData() {
+                    try data.write(to: fileURL)
+                } else {
+                    print("Unable to save photo.")
+                }
                 completion()
             } catch {
                 print("Unable to save photo.")
+                completion()
             }
         }
     }

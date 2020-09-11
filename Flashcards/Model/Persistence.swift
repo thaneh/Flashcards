@@ -9,6 +9,12 @@ import CoreData
 
 var globalCards = [Card]()
 
+protocol PersistenceControllerProtocol {
+    func addItem(card: Card) throws
+    func deleteItems(offsets: IndexSet, completion: @escaping ()->Void)
+    func loadItems(completion: @escaping ([Card])->Void)
+}
+
 struct PersistenceController {
     static let shared = PersistenceController()
 
@@ -54,7 +60,17 @@ struct PersistenceController {
             }
         })
     }
-    
+        
+    var fetchRequest: NSFetchRequest<CoreItem> {
+        let request: NSFetchRequest<CoreItem> = NSFetchRequest(entityName: "CoreItem")
+        request.sortDescriptors = [
+            NSSortDescriptor(keyPath: \CoreItem.created, ascending: true)
+        ]
+        return request
+    }
+}
+
+extension PersistenceController: PersistenceControllerProtocol {
     func addItem(card: Card) throws {
         let coreItem = CoreItem(context: container.viewContext)
         coreItem.id = card.id
@@ -71,25 +87,40 @@ struct PersistenceController {
         try container.viewContext.save()
     }
     
-    var fetchRequest: NSFetchRequest<CoreItem> {
-        let request: NSFetchRequest<CoreItem> = NSFetchRequest(entityName: "CoreItem")
-        request.sortDescriptors = [
-            NSSortDescriptor(keyPath: \CoreItem.created, ascending: true)
-        ]
-        return request
-    }
-    
-    func loadItems(completion: @escaping ([CoreItem])->Void) {
+    func loadItems(completion: @escaping ([Card])->Void) {
         DispatchQueue.global().async {
             do {
                 let coreItems = try container.viewContext.fetch(fetchRequest)
-                completion(coreItems)
+                if let cards = try? coreItems.map(self.toCard) {
+                    completion(cards)
+                } else {
+                    completion([Card]())
+                }
             }
             catch {
                 let nsError = error as NSError
                 fatalError("Unresolved error while loading \(nsError)")
             }
         }
+    }
+    
+    enum ConversionError: Error {
+        case invalidData
+    }
+    
+    func toCard(from item: CoreItem) throws -> Card {
+        guard let id = item.id,
+              let date = item.created,
+              let name = item.name else {
+            throw ConversionError.invalidData
+        }
+        var location: CLLocationCoordinate2D?
+        if item.hasLocation {
+            location = CLLocationCoordinate2D(latitude: item.latitude,
+                                              longitude: item.longitude)
+        }
+        return Card(id: id, created: date, name: name,
+                    details: item.details ?? "", /*photo: image,*/ location: location)
     }
     
     func deleteItems(offsets: IndexSet, completion: @escaping ()->Void) {

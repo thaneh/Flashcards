@@ -16,12 +16,14 @@ struct ItemDetails: View {
             Text(card.name)
                 .font(.title)
                 .padding(.bottom)
+                .accessibility(identifier: "ItemDetails.name")
             if let image = image {
                 Image(uiImage: image)
                     .resizable()
                     .scaledToFit()
             }
             Text(card.details)
+                .accessibility(identifier: "ItemDetails.description")
             
             if let location = card.location {
                 MapView(centerCoordinate: location)

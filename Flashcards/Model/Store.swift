@@ -10,13 +10,16 @@ import MapKit
 import UIKit
 
 class Store {
-    static let shared = Store(photosFileService: PhotosFileService.shared)
+    static let shared = Store(photosFileService: PhotosFileService.shared,
+                              persistence: PersistenceController.shared)
     
-    var cards = [Card]()
     private let fileService: PhotosFileServiceProtocol
+    private let persistence: PersistenceControllerProtocol
     
-    init(photosFileService: PhotosFileServiceProtocol) {
+    init(photosFileService: PhotosFileServiceProtocol,
+         persistence: PersistenceControllerProtocol) {
         self.fileService = photosFileService
+        self.persistence = persistence
     }
     
     func addItem(name: String, details: String?,
@@ -27,12 +30,10 @@ class Store {
             saveImage(image: image, forID: id)
         }
         let card = Card(id: id, created: Date(), name: name,
-                        details: details ?? "", //photo: image,
+                        details: details ?? "",
                         location: location)
         
-        try PersistenceController.shared.addItem(card: card)
-        
-        cards.append(card)
+        try persistence.addItem(card: card)
     }
     
     func saveImage(image: UIImage, forID id: UUID) {
@@ -41,10 +42,8 @@ class Store {
 //                print("save completed for \(id.uuidString)")
 //            }
 //        }
-        if let data = image.pngData() {
-            fileService.save(data: data, for: id) {
-                print("save completed for \(id.uuidString)")
-            }
+        fileService.save(image: image, for: id) {
+            print("save completed for \(id.uuidString)")
         }
     }
     
@@ -55,37 +54,10 @@ class Store {
     }
     
     func loadItems(completion: @escaping ([Card])->Void) {
-        PersistenceController.shared.loadItems { items in
-            if let cards = try? items.map(self.toCard) {
-                self.cards = cards
-                completion(cards)
-            } else {
-                completion([Card]())
-            }
-        }
+        persistence.loadItems(completion: completion)
     }
     
     func deleteItems(offsets: IndexSet, completion: @escaping ()->Void) {
-        PersistenceController.shared.deleteItems(offsets: offsets,
-                                                 completion: completion)
-    }
-        
-    enum ConversionError: Error {
-        case invalidData
-    }
-    
-    func toCard(from item: CoreItem) throws -> Card {
-        guard let id = item.id,
-              let date = item.created,
-              let name = item.name else {
-            throw ConversionError.invalidData
-        }
-        var location: CLLocationCoordinate2D?
-        if item.hasLocation {
-            location = CLLocationCoordinate2D(latitude: item.latitude,
-                                              longitude: item.longitude)
-        }
-        return Card(id: id, created: date, name: name,
-                    details: item.details ?? "", /*photo: image,*/ location: location)
+        persistence.deleteItems(offsets: offsets, completion: completion)
     }
 }

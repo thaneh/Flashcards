@@ -87,6 +87,7 @@ struct AddItemView: View {
                     .font(.title)
                     .padding()
                 TextField("description", text: $details)
+                    .accessibility(identifier: "AddItemView.description")
                     .padding()
                 
                 ImagePortion(image: $image)

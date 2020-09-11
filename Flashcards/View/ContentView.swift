@@ -25,9 +25,7 @@ struct ContentView: View {
             .navigationTitle("Flashcards")
             .toolbar {
                 ToolbarItem(placement: .navigation) {
-                    #if os(iOS)
                     EditButton()
-                    #endif
                 }
                 ToolbarItem(placement: .primaryAction) {
                     Button(action: addItem) {
@@ -40,6 +38,7 @@ struct ContentView: View {
                     .onDisappear(perform: loadItems)
             }
         }
+        .navigationViewStyle(StackNavigationViewStyle())
         .onAppear(perform: loadItems)
     }
     
@@ -57,18 +56,6 @@ struct ContentView: View {
 
     private func deleteItems(offsets: IndexSet) {
         Store.shared.deleteItems(offsets: offsets, completion: loadItems)
-//        withAnimation {
-//            offsets.map { items[$0] }.forEach(viewContext.delete)
-//
-//            do {
-//                try viewContext.save()
-//            } catch {
-//                // Replace this implementation with code to handle the error appropriately.
-//                // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
-//                let nsError = error as NSError
-//                fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
-//            }
-//        }
     }
 }
 
